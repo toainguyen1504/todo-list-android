@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">Todo List</string>
+    <string name="setting_button">setting button</string>
+    <string name="title_header">To-dos</string>
+    <string name="sub_title_header">2 to-dos</string>
+    <string name="icon_back_home_desc">icon back home</string>
+    <string name="add_button_desciption">add button desciption</string>
 </resources>
