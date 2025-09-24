@@ -14,4 +14,8 @@
     <string name="create_to_do_title">Add to-do</string>
     <string name="action_delete">Delete</string>
     <string name="action_hide_completed">Hide completed</string>
+    <string name="delete_title">Select</string>
+    <string name="select_all">Select all</string>
+    <string name="delete">Delete</string>
+    <string name="delete_button">delete button</string>
 </resources>

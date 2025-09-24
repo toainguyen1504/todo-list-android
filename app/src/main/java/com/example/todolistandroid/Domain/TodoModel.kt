@@ -5,5 +5,6 @@ import java.io.Serializable
 data class TodoModel(
     val id: Int,
     var text: String,
-    var isDone: Boolean = false
+    var isDone: Boolean = false,
+    var isSelected: Boolean = false
 ) : Serializable

@@ -4,6 +4,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.CheckBox
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.todolistandroid.Domain.TodoModel
@@ -15,7 +16,7 @@ class DeleteAdapter (
     ) : RecyclerView.Adapter<DeleteAdapter.DeleteViewHolder>() {
     inner class DeleteViewHolder (itemView: View) : RecyclerView.ViewHolder(itemView) {
         val text: TextView = itemView.findViewById(R.id.todoText)
-        val checkBox: CheckBox = itemView.findViewById(R.id.todoCheckBox)
+        val checkBox: ImageView = itemView.findViewById(R.id.todoCheckBox)
     }
 
     override fun onCreateViewHolder(
@@ -23,26 +24,41 @@ class DeleteAdapter (
         viewType: Int
     ): DeleteAdapter.DeleteViewHolder {
         val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_delete_todo, parent, false)
+            .inflate(R.layout.viewholder_delete_todo, parent, false)
         return DeleteViewHolder(view)
     }
 
     override fun onBindViewHolder(holder: DeleteAdapter.DeleteViewHolder, position: Int) {
         val todo = todos[position]
         holder.text.text = todo.text
-        holder.checkBox.isChecked = false
 
-        // when click checkbox -> call delete callback
-        holder.checkBox.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
-                onDeleteClick(todo)
-                // remove
-                val removedIndex = holder.adapterPosition
-                todos.removeAt(removedIndex)
-                notifyItemRemoved(removedIndex)
+        val context = holder.itemView.context
+
+        // show icon checkbox
+        if (todo.isSelected) {
+            holder.checkBox.setImageResource(R.drawable.check_box)
+            holder.checkBox.setColorFilter(context.getColor(R.color.primary))
+        } else {
+            holder.checkBox.setImageResource(R.drawable.check_box_blank)
+            holder.checkBox.setColorFilter(context.getColor(R.color.semi_grey))
+        }
+
+        // click checkbox -> toggle
+        holder.checkBox.setOnClickListener {
+            val pos = holder.bindingAdapterPosition
+            if (pos != RecyclerView.NO_POSITION) {
+                todos[pos].isSelected = !todos[pos].isSelected
+                notifyItemChanged(pos)
             }
         }
+
     }
 
     override fun getItemCount(): Int = todos.size
+
+
+    fun selectAll(select: Boolean) {
+        todos.forEach { it.isSelected = select }
+        notifyDataSetChanged()
+    }
 }

@@ -126,7 +126,7 @@
             android:orientation="horizontal">
 
             <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/todosBtnBottom"
+                android:id="@+id/deleteBtnBottom"
                 android:layout_width="60dp"
                 android:layout_height="match_parent">
 

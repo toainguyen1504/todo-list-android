@@ -29,6 +29,22 @@ class MainActivity : AppCompatActivity() {
     private lateinit var adapter: TodoAdapter
     private val mockTodos = mutableListOf<TodoModel>()
 
+    // Khai báo launcher để nhận kết quả trả về
+    private val deleteLauncher = registerForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val updatedTodos =
+                result.data?.getSerializableExtra("updatedTodos") as? ArrayList<TodoModel>
+            if (updatedTodos != null) {
+                mockTodos.clear()
+                mockTodos.addAll(updatedTodos)
+                adapter.notifyDataSetChanged()
+                updateSubtitle()
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -46,6 +62,7 @@ class MainActivity : AppCompatActivity() {
         repeat(10) { i ->
             mockTodos.add(TodoModel(id = i + 1, text = "Task số ${i + 1}"))
         }
+        updateSubtitle()
 
         adapter = TodoAdapter(mockTodos) { todo ->
             // when click 1 todo
@@ -70,6 +87,7 @@ class MainActivity : AppCompatActivity() {
                 // alert adapter that it has new item
                 adapter.notifyItemInserted(0)
                 binding.taskView.scrollToPosition(0)
+                updateSubtitle()
 
                 Toast.makeText(this, "Added: $newTask", Toast.LENGTH_SHORT).show()
             }
@@ -94,7 +112,9 @@ class MainActivity : AppCompatActivity() {
                     R.id.action_delete -> {
                         val intent = Intent(this, DeleteTodoActivity::class.java)
                         intent.putExtra("todos", ArrayList(mockTodos) as java.io.Serializable)
-                        startActivity(intent)
+
+                        // use launcher , not startActivity
+                        deleteLauncher.launch(intent)
                         true
                     }
 
@@ -199,4 +219,8 @@ class MainActivity : AppCompatActivity() {
         bottomSheet.show()
     }
 
+    // function update total of todos
+    private fun updateSubtitle() {
+        binding.subtitle.text = "${mockTodos.size} tasks"
+    }
 }
