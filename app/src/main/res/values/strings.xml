@@ -5,4 +5,10 @@
     <string name="sub_title_header">2 to-dos</string>
     <string name="icon_back_home_desc">icon back home</string>
     <string name="add_button_desciption">add button desciption</string>
+    <string name="task_view">Task view</string>
+    <string name="radio_button">Radio button</string>
+    <string name="cancel">Cancel</string>
+    <string name="save">Save</string>
+    <string name="edit_to_do_title">Edit To-Do</string>
+    <string name="new_to_do">New to-do</string>
 </resources>

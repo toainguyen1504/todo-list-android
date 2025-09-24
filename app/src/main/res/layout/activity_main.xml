@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/primary_bg"
-    tools:context=".MainActivity">
+    tools:context=".Activity.MainActivity">
 
     <!-- Header -->
     <LinearLayout
@@ -32,6 +32,7 @@
                 android:id="@+id/title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:fontFamily="@font/poppins"
                 android:text="@string/title_header"
                 android:textColor="@color/black"
                 android:textSize="32sp"
@@ -42,6 +43,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="8dp"
+                android:fontFamily="@font/poppins"
                 android:text="@string/sub_title_header"
                 android:textColor="@color/grey"
                 android:textSize="14sp" />
@@ -90,8 +92,14 @@
                     android:id="@+id/taskView"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginEnd="12dp"
+                    android:layout_marginBottom="32dp"
                     app:layout_constraintBottom_toBottomOf="parent"
-                    tools:layout_editor_absoluteX="0dp" />
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
             </androidx.constraintlayout.widget.ConstraintLayout>
 
         </LinearLayout>
@@ -140,7 +148,7 @@
                     android:textAlignment="center"
                     android:textColor="@color/black"
                     android:textSize="13sp"
-                    android:textStyle="bold"
+                    android:fontFamily="@font/poppins_semibold"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/imageView" />
@@ -159,7 +167,7 @@
         android:contentDescription="@string/add_button_desciption"
         android:clickable="true"
         android:focusable="true"
-        android:elevation="8dp"
+        android:elevation="12dp"
         android:padding="16dp"
         app:layout_constraintBottom_toBottomOf="@+id/nestedScrollView"
         app:layout_constraintEnd_toEndOf="parent"
