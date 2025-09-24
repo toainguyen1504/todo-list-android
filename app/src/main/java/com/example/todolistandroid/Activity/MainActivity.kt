@@ -8,6 +8,9 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.todolistandroid.Adapter.TodoAdapter
+import com.example.todolistandroid.Domain.TodoModel
 import com.example.todolistandroid.R
 import com.example.todolistandroid.databinding.ActivityMainBinding
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -15,6 +18,8 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
+    private lateinit var adapter: TodoAdapter
+    private val mockTodos = mutableListOf<TodoModel>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,6 +29,26 @@ class MainActivity : AppCompatActivity() {
         val window: Window = this@MainActivity.window
         window.statusBarColor = ContextCompat.getColor(this@MainActivity, R.color.primary)
 
+
+        // handle show list todo (mock data) to view
+        val recyclerView = binding.taskView
+        recyclerView.layoutManager = LinearLayoutManager(this)
+
+        // Mock data
+        repeat(10) { i ->
+            mockTodos.add(TodoModel(id = i + 1, text = "Task số ${i + 1}"))
+        }
+
+        adapter = TodoAdapter(mockTodos) { todo ->
+            // when click 1 todo
+            showEditTodoDialog(todo.text) { newText ->
+                todo.text = newText
+                recyclerView.adapter?.notifyItemChanged(mockTodos.indexOf(todo))
+            }
+        }
+        recyclerView.adapter = adapter
+
+        // handle click add btn event
         binding.addBtn.setOnClickListener {
             showEditTodoDialog { newTask ->
                 // TODO: logic thêm task vào danh sách
@@ -39,7 +64,7 @@ class MainActivity : AppCompatActivity() {
         val view = layoutInflater.inflate(R.layout.dialog_edit_todo, null)
         bottomSheet.setContentView(view)
 
-        val editText = view.findViewById<EditText>(R.id.editTextTodo)
+        val editText = view.findViewById<EditText>(R.id.inputTodoText)
         val btnCancel = view.findViewById<TextView>(R.id.btnCancel)
         val btnSave = view.findViewById<TextView>(R.id.btnSave)
 

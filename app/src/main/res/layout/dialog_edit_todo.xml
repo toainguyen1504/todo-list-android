@@ -28,7 +28,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text="@string/edit_to_do_title"
-            android:fontFamily="@font/poppins"
+            android:fontFamily="@font/poppins_medium"
             android:textSize="20sp"
             android:layout_weight="1"
             android:gravity="center"/>
@@ -46,7 +46,7 @@
 
     <!-- Input -->
     <EditText
-        android:id="@+id/editTextTodo"
+        android:id="@+id/inputTodoText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
