@@ -11,4 +11,7 @@
     <string name="save">Save</string>
     <string name="edit_to_do_title">Edit To-Do</string>
     <string name="new_to_do">New to-do</string>
+    <string name="create_to_do_title">Add to-do</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_hide_completed">Hide completed</string>
 </resources>

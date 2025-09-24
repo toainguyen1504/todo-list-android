@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <group android:id="@+id/group_1">
+        <item
+            android:id="@+id/action_delete"
+            android:title="@string/action_delete" />
+    </group>
+
+    <group android:id="@+id/group_2">
+        <item
+            android:id="@+id/action_hide_completed"
+            android:title="@string/action_hide_completed" />
+    </group>
+</menu>

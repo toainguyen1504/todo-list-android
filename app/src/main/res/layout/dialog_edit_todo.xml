@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/primary_bg"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:paddingHorizontal="16dp"
+    android:paddingVertical="24dp">
 
     <!-- Header: Cancel - Title - Save -->
     <LinearLayout
@@ -27,11 +26,12 @@
             android:id="@+id/dialogTitle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="@string/edit_to_do_title"
-            android:fontFamily="@font/poppins_medium"
-            android:textSize="20sp"
             android:layout_weight="1"
-            android:gravity="center"/>
+            android:fontFamily="@font/poppins_medium"
+            android:gravity="center"
+            android:text="@string/edit_to_do_title"
+            android:textSize="20sp"
+            android:textColor="@color/black"/>
 
         <TextView
             android:id="@+id/btnSave"
@@ -53,6 +53,6 @@
         android:background="@drawable/white_background"
         android:hint="@string/new_to_do"
         android:inputType="text"
-        android:padding="12dp" />
+        android:padding="12dp"/>
 
 </LinearLayout>

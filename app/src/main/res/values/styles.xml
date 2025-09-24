@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <!-- be used Android AppCompat -->
+        <item name="popupMenuStyle">@style/CustomPopupMenu</item>
+        <!-- be used old Android framework -->
+        <item name="android:popupMenuStyle">@style/CustomPopupMenu</item>
+    </style>
+
+    <!-- Style custom cho popup menu -->
+    <style name="CustomPopupMenu" parent="Widget.AppCompat.PopupMenu">
+        <item name="android:popupBackground">@drawable/bg_popup_menu</item>
+        <item name="android:listDivider">@drawable/custom_divider</item>
+    </style>
+
+    <dimen name="popup_margin_end">8dp</dimen>
+</resources>

@@ -20,7 +20,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <!-- Cột trái: title + subtitle -->
+        <!-- title + subtitle -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="match_parent"
@@ -48,7 +48,7 @@
                 android:textSize="14sp" />
         </LinearLayout>
 
-        <!-- Cột phải: nút setting -->
+        <!-- setting btn-->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
