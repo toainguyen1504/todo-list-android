@@ -13,7 +13,7 @@
     android:paddingVertical="8dp">
 
     <ImageView
-        android:id="@+id/radio_check"
+        android:id="@+id/radio_check_done"
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:layout_gravity="center"
@@ -23,7 +23,7 @@
         app:tint="@color/primary" />
 
     <TextView
-        android:id="@+id/editTodoText"
+        android:id="@+id/todoTextDone"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"

@@ -29,6 +29,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var adapter: TodoAdapter
     private val mockTodos = mutableListOf<TodoModel>()
 
+    private var isHideCompleted = false
+
     // Khai báo launcher để nhận kết quả trả về
     private val deleteLauncher = registerForActivityResult(
         androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
@@ -64,13 +66,25 @@ class MainActivity : AppCompatActivity() {
         }
         updateSubtitle()
 
-        adapter = TodoAdapter(mockTodos) { todo ->
-            // when click 1 todo
-            showEditTodoDialog(todo.text) { newText ->
-                todo.text = newText
-                recyclerView.adapter?.notifyItemChanged(mockTodos.indexOf(todo))
+//        adapter = TodoAdapter(mockTodos) { todo ->
+//            // when click 1 todo
+//            showEditTodoDialog(todo.text) { newText ->
+//                todo.text = newText
+//                recyclerView.adapter?.notifyItemChanged(mockTodos.indexOf(todo))
+//            }
+//        }
+        adapter = TodoAdapter(
+            mockTodos,
+            onClick = { todo ->
+                showEditTodoDialog(todo.text) { newText ->
+                    todo.text = newText
+                    recyclerView.adapter?.notifyItemChanged(mockTodos.indexOf(todo))
+                }
+            },
+            onTodoUpdated = {
+                updateSubtitle()
             }
-        }
+        )
         recyclerView.adapter = adapter
 
         // add todo: handle click add btn event
@@ -107,6 +121,10 @@ class MainActivity : AppCompatActivity() {
             // divider line
             popup.menu.setGroupDividerEnabled(true)
 
+            // set initial title
+            val hideCompletedItem = popup.menu.findItem(R.id.action_hide_completed)
+            hideCompletedItem.title = if (isHideCompleted) "Show completed" else "Hide completed"
+
             popup.setOnMenuItemClickListener { item ->
                 when (item.itemId) {
                     R.id.action_delete -> {
@@ -119,7 +137,33 @@ class MainActivity : AppCompatActivity() {
                     }
 
                     R.id.action_hide_completed -> {
-                        Toast.makeText(this, "Hide clicked", Toast.LENGTH_SHORT).show()
+                        // toggle
+                        isHideCompleted = !isHideCompleted
+
+                        // change text menu item
+                        item.title = if (isHideCompleted) "Show completed" else "Hide completed"
+
+                        // filter list RecyclerView
+                        val filteredTodos = if (isHideCompleted) {
+                            mockTodos.filter { !it.isDone }
+                        } else {
+                            mockTodos
+                        }
+
+                        adapter = TodoAdapter(
+                            filteredTodos.toMutableList(),
+                            onClick = { todo ->
+                                showEditTodoDialog(todo.text) { newText ->
+                                    todo.text = newText
+                                    recyclerView.adapter?.notifyItemChanged(filteredTodos.indexOf(todo))
+                                }
+                            },
+                            onTodoUpdated = { updateSubtitle() }
+                        )
+                        recyclerView.adapter = adapter
+
+                        // close popup
+                        popup.dismiss()
                         true
                     }
 
@@ -221,6 +265,13 @@ class MainActivity : AppCompatActivity() {
 
     // function update total of todos
     private fun updateSubtitle() {
-        binding.subtitle.text = "${mockTodos.size} tasks"
+        val undoneCount = mockTodos.count { !it.isDone }
+        val doneCount = mockTodos.count { it.isDone }
+
+        binding.subtitle.text = when {
+            undoneCount == 0 && doneCount > 0 -> "All tasks completed!"
+            doneCount > 0 -> "$undoneCount tasks (doing), $doneCount done"
+            else -> "$undoneCount tasks"
+        }
     }
 }

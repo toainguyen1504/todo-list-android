@@ -5,6 +5,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.CheckBox
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.todolistandroid.Domain.TodoModel
@@ -17,6 +18,8 @@ class DeleteAdapter (
     inner class DeleteViewHolder (itemView: View) : RecyclerView.ViewHolder(itemView) {
         val text: TextView = itemView.findViewById(R.id.todoText)
         val checkBox: ImageView = itemView.findViewById(R.id.todoCheckBox)
+
+        val todoRow: LinearLayout = itemView.findViewById(R.id.todoRow)
     }
 
     override fun onCreateViewHolder(
@@ -33,6 +36,15 @@ class DeleteAdapter (
         holder.text.text = todo.text
 
         val context = holder.itemView.context
+
+        // set color and background
+        if (todo.isDone) {
+            holder.text.setTextColor(context.getColor(R.color.semi_grey))
+            holder.todoRow.setBackgroundResource(R.drawable.grey_background)
+        } else {
+            holder.checkBox.setColorFilter(context.getColor(R.color.semi_grey))
+            holder.todoRow.setBackgroundResource(R.drawable.white_background)
+        }
 
         // show icon checkbox
         if (todo.isSelected) {
