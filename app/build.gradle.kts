@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -51,4 +52,22 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     implementation("com.github.bumptech.glide:glide:5.0.5")
+
+    val room_version = "2.8.1"
+
+    implementation("androidx.room:room-runtime:$room_version")
+
+    // Kotlin Symbol Processing (bắt buộc cho Kotlin)
+    ksp("androidx.room:room-compiler:$room_version")
+
+    // Kotlin Extensions + Coroutines
+    implementation("androidx.room:room-ktx:$room_version")
+
+    // (tùy chọn) các thư viện mở rộng
+    implementation("androidx.room:room-rxjava2:$room_version")
+    implementation("androidx.room:room-rxjava3:$room_version")
+    implementation("androidx.room:room-guava:$room_version")
+    testImplementation("androidx.room:room-testing:$room_version")
+    implementation("androidx.room:room-paging:$room_version")
+
 }
