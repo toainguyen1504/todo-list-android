@@ -15,37 +15,28 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.widget.addTextChangedListener
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.todolistandroid.Adapter.TodoAdapter
+import com.example.todolistandroid.Data.TodoDatabase
+import com.example.todolistandroid.Data.TodoDao
 import com.example.todolistandroid.Domain.TodoModel
 import com.example.todolistandroid.R
 import com.example.todolistandroid.databinding.ActivityMainBinding
 import com.google.android.material.bottomsheet.BottomSheetDialog
-import java.util.ArrayList
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var adapter: TodoAdapter
-    private val mockTodos = mutableListOf<TodoModel>()
+    private lateinit var todoDao: TodoDao
+    private lateinit var db: TodoDatabase
 
+    // Save snapshot lastest from DB
+    private var latestTodos: List<TodoModel> = emptyList()
     private var isHideCompleted = false
 
-    // Khai báo launcher để nhận kết quả trả về
-    private val deleteLauncher = registerForActivityResult(
-        androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == RESULT_OK) {
-            val updatedTodos =
-                result.data?.getSerializableExtra("updatedTodos") as? ArrayList<TodoModel>
-            if (updatedTodos != null) {
-                mockTodos.clear()
-                mockTodos.addAll(updatedTodos)
-                adapter.notifyDataSetChanged()
-                updateSubtitle()
-            }
-        }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,54 +46,49 @@ class MainActivity : AppCompatActivity() {
         val window: Window = this@MainActivity.window
         window.statusBarColor = ContextCompat.getColor(this@MainActivity, R.color.primary)
 
+        // init db + dao
+        db = TodoDatabase.getDatabase(this)
+        todoDao = db.todoDao()
 
-        // handle show list todo (mock data) to view
-        val recyclerView = binding.taskView
-        recyclerView.layoutManager = LinearLayoutManager(this)
-
-        // Mock data
-        repeat(10) { i ->
-            mockTodos.add(TodoModel(id = i + 1, text = "Task số ${i + 1}"))
-        }
-        updateSubtitle()
-
-//        adapter = TodoAdapter(mockTodos) { todo ->
-//            // when click 1 todo
-//            showEditTodoDialog(todo.text) { newText ->
-//                todo.text = newText
-//                recyclerView.adapter?.notifyItemChanged(mockTodos.indexOf(todo))
-//            }
-//        }
+        // tạo adapter và truyền onToggle để cập nhật DB khi checkbox click
         adapter = TodoAdapter(
-            mockTodos,
+            todos = mutableListOf(),
             onClick = { todo ->
                 showEditTodoDialog(todo.text) { newText ->
-                    todo.text = newText
-                    recyclerView.adapter?.notifyItemChanged(mockTodos.indexOf(todo))
+                    lifecycleScope.launch { todoDao.update(todo.copy(text = newText)) }
                 }
             },
-            onTodoUpdated = {
-                updateSubtitle()
-            }
+            onToggle = { todo ->
+                // đổi trạng thái isDone và update vào DB -> Flow sẽ emit danh sách mới
+                lifecycleScope.launch {
+                    todoDao.update(todo.copy(isDone = !todo.isDone))
+                }
+            },
+            onTodoUpdated = { /*   // nếu adapter có callback khi trạng thái thay đổi thì cập nhật DB ở đây */ }
         )
-        recyclerView.adapter = adapter
 
-        // add todo: handle click add btn event
+        binding.taskView.layoutManager = LinearLayoutManager(this)
+        binding.taskView.adapter = adapter
+
+        // collect data từ Flow (collectLatest tốt cho UI)
+        lifecycleScope.launch {
+            todoDao.getAllTodos().collect { todos ->
+                latestTodos = todos
+
+                val finalDisplay = getDisplayTodos(todos)
+
+                adapter.setTodos(finalDisplay)
+                updateSubtitle(finalDisplay)
+            }
+        }
+
+        // add todo
         binding.addBtn.setOnClickListener {
             showEditTodoDialog { newTask ->
-                val newTodo = TodoModel(
-                    id = mockTodos.size + 1, // or Random ID
-                    text = newTask,
-                    isDone = false
-                )
+                val newTodo = TodoModel(text = newTask)
+                lifecycleScope.launch { todoDao.insert(newTodo) }
 
-                mockTodos.add(0, newTodo)
-
-                // alert adapter that it has new item
-                adapter.notifyItemInserted(0)
                 binding.taskView.scrollToPosition(0)
-                updateSubtitle()
-
                 Toast.makeText(this, "Added: $newTask", Toast.LENGTH_SHORT).show()
             }
         }
@@ -112,7 +98,7 @@ class MainActivity : AppCompatActivity() {
         val settingBtn = findViewById<ImageButton>(R.id.setting)
 
         settingBtn.setOnClickListener { view ->
-            val popup =  PopupMenu(
+            val popup = PopupMenu(
                 ContextThemeWrapper(this, R.style.CustomPopupMenu),
                 view
             )
@@ -128,150 +114,155 @@ class MainActivity : AppCompatActivity() {
             popup.setOnMenuItemClickListener { item ->
                 when (item.itemId) {
                     R.id.action_delete -> {
+                        // open delete view
+                        val currentDisplay = adapter.getCurrentTodos()  // viết hàm này trong adapter
                         val intent = Intent(this, DeleteTodoActivity::class.java)
-                        intent.putExtra("todos", ArrayList(mockTodos) as java.io.Serializable)
-
-                        // use launcher , not startActivity
-                        deleteLauncher.launch(intent)
+                        intent.putExtra("todos", ArrayList(currentDisplay))
+                        startActivityForResult(intent, 1001)
                         true
                     }
-
                     R.id.action_hide_completed -> {
-                        // toggle
-                        isHideCompleted = !isHideCompleted
+                        isHideCompleted = !isHideCompleted // toggle
+                        hideCompletedItem.title =
+                            if (isHideCompleted) "Show completed" else "Hide completed"
 
-                        // change text menu item
-                        item.title = if (isHideCompleted) "Show completed" else "Hide completed"
-
-                        // filter list RecyclerView
-                        val filteredTodos = if (isHideCompleted) {
-                            mockTodos.filter { !it.isDone }
-                        } else {
-                            mockTodos
-                        }
-
-                        adapter = TodoAdapter(
-                            filteredTodos.toMutableList(),
-                            onClick = { todo ->
-                                showEditTodoDialog(todo.text) { newText ->
-                                    todo.text = newText
-                                    recyclerView.adapter?.notifyItemChanged(filteredTodos.indexOf(todo))
-                                }
-                            },
-                            onTodoUpdated = { updateSubtitle() }
-                        )
-                        recyclerView.adapter = adapter
-
-                        // close popup
-                        popup.dismiss()
+                        val finalDisplay = getDisplayTodos(latestTodos)
+                        adapter.setTodos(finalDisplay)
+                        updateSubtitle(finalDisplay)
                         true
                     }
 
                     else -> false
                 }
             }
-            popup.show()
+                popup.show()
         }
-    }
-
-    // function show add and edit popup
-    private fun showEditTodoDialog(oldText: String? = null, onSave: (String) -> Unit) {
-        val bottomSheet = BottomSheetDialog(this)
-        val view = layoutInflater.inflate(R.layout.dialog_edit_todo, null)
-        bottomSheet.setContentView(view)
-        bottomSheet.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
+    }   // end onCreate
 
 
-        val editText = view.findViewById<EditText>(R.id.inputTodoText)
-        val btnCancel = view.findViewById<TextView>(R.id.btnCancel)
-        val btnSave = view.findViewById<TextView>(R.id.btnSave)
-        val dialogTitle = view.findViewById<TextView>(R.id.dialogTitle)
+        // function show add and edit popup
+        private fun showEditTodoDialog(oldText: String? = null, onSave: (String) -> Unit) {
+            val bottomSheet = BottomSheetDialog(this)
+            val view = layoutInflater.inflate(R.layout.dialog_edit_todo, null)
+            bottomSheet.setContentView(view)
+            bottomSheet.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
 
-        // Initial state : disable Save
-        btnSave.isEnabled = false
-        btnSave.alpha = 0.5f
 
-        // Case edit
-        if (!oldText.isNullOrEmpty()) {
-            dialogTitle.text = getString(R.string.edit_to_do_title)
-            editText.setText(oldText)
-            editText.setSelection(editText.text.length)
+            val editText = view.findViewById<EditText>(R.id.inputTodoText)
+            val btnCancel = view.findViewById<TextView>(R.id.btnCancel)
+            val btnSave = view.findViewById<TextView>(R.id.btnSave)
+            val dialogTitle = view.findViewById<TextView>(R.id.dialogTitle)
 
-            // check state
-            editText.addTextChangedListener() {
-                val currentText = it.toString().trim()
-                if (currentText.isNotEmpty() && currentText != oldText.trim()) {
-                    btnSave.isEnabled = true
-                    btnSave.alpha = 1f
-                } else {
-                    btnSave.isEnabled = false
-                    btnSave.alpha = 0.5f
+            // Initial state : disable Save
+            btnSave.isEnabled = false
+            btnSave.alpha = 0.5f
+
+            // Case edit
+            if (!oldText.isNullOrEmpty()) {
+                dialogTitle.text = getString(R.string.edit_to_do_title)
+                editText.setText(oldText)
+                editText.setSelection(editText.text.length)
+
+                // check state
+                editText.addTextChangedListener() {
+                    val currentText = it.toString().trim()
+                    if (currentText.isNotEmpty() && currentText != oldText.trim()) {
+                        btnSave.isEnabled = true
+                        btnSave.alpha = 1f
+                    } else {
+                        btnSave.isEnabled = false
+                        btnSave.alpha = 0.5f
+                    }
+                }
+            } else {
+                // Case Add
+                dialogTitle.text = getString(R.string.create_to_do_title)
+
+                // check state
+                editText.addTextChangedListener {
+                    val currentText = it.toString().trim()
+                    if (currentText.isNotEmpty()) {
+                        btnSave.isEnabled = true
+                        btnSave.alpha = 1f
+                    } else {
+                        btnSave.isEnabled = false
+                        btnSave.alpha = 0.5f
+                    }
                 }
             }
-        }  else {
-            // Case Add
-            dialogTitle.text = getString(R.string.create_to_do_title)
 
-            // check state
-            editText.addTextChangedListener {
-                val currentText = it.toString().trim()
-                if (currentText.isNotEmpty()) {
-                    btnSave.isEnabled = true
-                    btnSave.alpha = 1f
-                } else {
-                    btnSave.isEnabled = false
-                    btnSave.alpha = 0.5f
+            btnCancel.setOnClickListener { bottomSheet.dismiss() }
+
+            btnSave.setOnClickListener {
+                val newTask = editText.text.toString().trim()
+                if (newTask.isNotEmpty()) {
+                    onSave(newTask)
+                }
+                bottomSheet.dismiss()
+            }
+
+            bottomSheet.setOnShowListener { dialog ->
+                try {
+                    val d = dialog as BottomSheetDialog
+                    val bottomSheetView =
+                        d.findViewById<FrameLayout>(com.google.android.material.R.id.design_bottom_sheet)
+                    bottomSheetView?.setBackgroundResource(R.drawable.dialog_background)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+
+            // focus và show keyboard
+            editText?.let {
+                it.requestFocus()
+                it.post {
+                    val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+                    imm.showSoftInput(it, InputMethodManager.SHOW_IMPLICIT)
+                }
+            }
+
+            bottomSheet.show()
+        }
+
+        // function update total of todos
+        private fun updateSubtitle(todos: List<TodoModel>) {
+            val undoneCount = todos.count { !it.isDone }
+            val doneCount = todos.count { it.isDone }
+
+            binding.subtitle.text = when {
+                undoneCount == 0 && doneCount > 0 -> "All tasks completed!"
+                doneCount > 0 -> "$undoneCount tasks (doing), $doneCount done"
+                else -> "$undoneCount tasks"
+            }
+        }
+
+        //    override onActivityResult to update DB after delete
+        override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+            super.onActivityResult(requestCode, resultCode, data)
+
+            if (requestCode == 1001 && resultCode == RESULT_OK) {
+                val updatedTodos = data?.getSerializableExtra("updatedTodos") as? ArrayList<TodoModel>
+
+                if (updatedTodos != null) {
+                    lifecycleScope.launch {
+                        val updatedIds = updatedTodos.map { it.id }
+                        val deleted = latestTodos.filter { it.id !in updatedIds }
+                        todoDao.deleteByIds(deleted.map { it.id })
+                    }
                 }
             }
         }
 
-        // Focus + open keyboard
-//        editText.requestFocus()
-//        val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
-//        imm.showSoftInput(editText, InputMethodManager.SHOW_IMPLICIT)
+        // get todos list done or !done
+        private fun getDisplayTodos(source: List<TodoModel>): List<TodoModel> {
+            val undone = source.filter { !it.isDone }
+            val done = source.filter { it.isDone }
 
-        btnCancel.setOnClickListener { bottomSheet.dismiss() }
+            // undone stay position (id DESC), done xuống cuối
+            val display = undone + done
 
-        btnSave.setOnClickListener {
-            val newTask = editText.text.toString().trim()
-            if (newTask.isNotEmpty()) {
-                onSave(newTask)
-            }
-            bottomSheet.dismiss()
+            return if (isHideCompleted) undone else display
         }
 
-        bottomSheet.setOnShowListener { dialog ->
-            try {
-                val d = dialog as BottomSheetDialog
-                val bottomSheetView =
-                    d.findViewById<FrameLayout>(com.google.android.material.R.id.design_bottom_sheet)
-                bottomSheetView?.setBackgroundResource(R.drawable.dialog_background)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
-
-        // focus và show keyboard
-        editText?.let {
-            it.requestFocus()
-            it.post {
-                val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
-                imm.showSoftInput(it, InputMethodManager.SHOW_IMPLICIT)
-            }
-        }
-
-        bottomSheet.show()
-    }
-
-    // function update total of todos
-    private fun updateSubtitle() {
-        val undoneCount = mockTodos.count { !it.isDone }
-        val doneCount = mockTodos.count { it.isDone }
-
-        binding.subtitle.text = when {
-            undoneCount == 0 && doneCount > 0 -> "All tasks completed!"
-            doneCount > 0 -> "$undoneCount tasks (doing), $doneCount done"
-            else -> "$undoneCount tasks"
-        }
-    }
 }
+

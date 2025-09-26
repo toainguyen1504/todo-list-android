@@ -1,5 +1,6 @@
 package com.example.todolistandroid.Activity
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.TextView
 import android.widget.Toast
@@ -64,7 +65,7 @@ class DeleteTodoActivity : AppCompatActivity() {
             todos.removeAll(selectedTodos)
 
             // back result
-            val resultIntent = intent
+            val resultIntent = Intent()
             resultIntent.putExtra("updatedTodos", ArrayList(todos))
             setResult(RESULT_OK, resultIntent)
 

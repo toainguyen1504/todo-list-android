@@ -13,6 +13,7 @@ import com.example.todolistandroid.R
 class TodoAdapter (
     private val todos: MutableList<TodoModel>,
     private val onClick: (TodoModel) -> Unit,
+    private val onToggle: (TodoModel) -> Unit, // gọi khi user toggle
     private val onTodoUpdated: () -> Unit
 
 ) : RecyclerView.Adapter<TodoAdapter.TodoViewHolder>(){
@@ -35,10 +36,9 @@ class TodoAdapter (
     override fun onBindViewHolder(holder: TodoAdapter.TodoViewHolder, position: Int) {
         val todo = todos[position]
         holder.todoText.text = todo.text
-
         val context = holder.itemView.context
 
-        // show icon checkbox
+        // show checkbox status
         if (todo.isDone) {
             holder.checkIcon.setImageResource(R.drawable.check_circle)
             holder.checkIcon.setColorFilter(context.getColor(R.color.primary))
@@ -51,46 +51,24 @@ class TodoAdapter (
             holder.todoText.setTextColor(context.getColor(R.color.black))
         }
 
-        // handle click
+        // click checkbox -> call callback to activity update DB
         holder.todoText.setOnClickListener { onClick(todo) }
 
         holder.checkIcon.setOnClickListener {
-            val pos = holder.bindingAdapterPosition
-            if (pos != RecyclerView.NO_POSITION) {
-                // Toggle trạng thái done / doing
-                todo.isDone = !todo.isDone
-
-                // Cập nhật icon và background ngay lập tức
-                if (todo.isDone) {
-                    holder.checkIcon.setImageResource(R.drawable.check_circle)
-                    holder.checkIcon.setColorFilter(context.getColor(R.color.primary))
-                    holder.todoRow.setBackgroundResource(R.drawable.grey_background)
-                    holder.todoText.setTextColor(context.getColor(R.color.semi_grey))
-
-                    // Remove khỏi vị trí cũ và thêm vào cuối list
-                    todos.removeAt(pos)
-                    notifyItemRemoved(pos)
-                    todos.add(todo)
-                    notifyItemInserted(todos.size - 1)
-                } else {
-                    holder.checkIcon.setImageResource(R.drawable.check_circle_blank)
-                    holder.checkIcon.setColorFilter(context.getColor(R.color.semi_grey))
-                    holder.todoRow.setBackgroundResource(R.drawable.white_background)
-                    holder.todoText.setTextColor(context.getColor(R.color.black))
-
-                    // Remove khỏi vị trí cũ và thêm lên đầu list
-                    todos.removeAt(pos)
-                    notifyItemRemoved(pos)
-                    todos.add(0, todo)
-                    notifyItemInserted(0)
-                }
-
-                // Cập nhật subtitle
-                onTodoUpdated()
-            }
+            onToggle(todo)
+            // onTodoUpdated nếu cần (ví dụ update title ngay lập tức), nhưng UI cuối cùng sẽ update từ Flow
+            onTodoUpdated()
         }
 
     }
 
     override fun getItemCount(): Int = todos.size
+
+    fun setTodos(newTodos: List<TodoModel>) {
+        todos.clear()
+        todos.addAll(newTodos)
+        notifyDataSetChanged()
+    }
+
+    fun getCurrentTodos(): List<TodoModel> = todos
 }
