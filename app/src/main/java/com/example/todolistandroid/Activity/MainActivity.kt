@@ -33,7 +33,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var todoDao: TodoDao
     private lateinit var db: TodoDatabase
 
-    // Save snapshot lastest from DB
+    // Save lastest snapshot  from DB
     private var latestTodos: List<TodoModel> = emptyList()
     private var isHideCompleted = false
 
@@ -50,7 +50,7 @@ class MainActivity : AppCompatActivity() {
         db = TodoDatabase.getDatabase(this)
         todoDao = db.todoDao()
 
-        // tạo adapter và truyền onToggle để cập nhật DB khi checkbox click
+        // create adapter and pass onToggle to update DB when checkbox is clicked
         adapter = TodoAdapter(
             todos = mutableListOf(),
             onClick = { todo ->
@@ -59,18 +59,18 @@ class MainActivity : AppCompatActivity() {
                 }
             },
             onToggle = { todo ->
-                // đổi trạng thái isDone và update vào DB -> Flow sẽ emit danh sách mới
+                // toggle isDone status and update into DB -> Flow will emit the new list
                 lifecycleScope.launch {
                     todoDao.update(todo.copy(isDone = !todo.isDone))
                 }
             },
-            onTodoUpdated = { /*   // nếu adapter có callback khi trạng thái thay đổi thì cập nhật DB ở đây */ }
+            onTodoUpdated = { /* if adapter has a callback when state changes, update DB here */ }
         )
 
         binding.taskView.layoutManager = LinearLayoutManager(this)
         binding.taskView.adapter = adapter
 
-        // collect data từ Flow (collectLatest tốt cho UI)
+        // collect data from Flow (collectLatest is better for UI)
         lifecycleScope.launch {
             todoDao.getAllTodos().collect { todos ->
                 latestTodos = todos
@@ -212,7 +212,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
-            // focus và show keyboard
+            // focus and show keyboard
             editText?.let {
                 it.requestFocus()
                 it.post {
@@ -258,7 +258,7 @@ class MainActivity : AppCompatActivity() {
             val undone = source.filter { !it.isDone }
             val done = source.filter { it.isDone }
 
-            // undone stay position (id DESC), done xuống cuối
+            // undone todos stay position (id DESC), done todos goes to the bottom
             val display = undone + done
 
             return if (isHideCompleted) undone else display

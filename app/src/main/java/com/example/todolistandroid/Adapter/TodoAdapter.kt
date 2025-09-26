@@ -13,7 +13,7 @@ import com.example.todolistandroid.R
 class TodoAdapter (
     private val todos: MutableList<TodoModel>,
     private val onClick: (TodoModel) -> Unit,
-    private val onToggle: (TodoModel) -> Unit, // gọi khi user toggle
+    private val onToggle: (TodoModel) -> Unit,
     private val onTodoUpdated: () -> Unit
 
 ) : RecyclerView.Adapter<TodoAdapter.TodoViewHolder>(){
@@ -56,7 +56,6 @@ class TodoAdapter (
 
         holder.checkIcon.setOnClickListener {
             onToggle(todo)
-            // onTodoUpdated nếu cần (ví dụ update title ngay lập tức), nhưng UI cuối cùng sẽ update từ Flow
             onTodoUpdated()
         }
 
